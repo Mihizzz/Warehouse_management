@@ -20,7 +20,6 @@ async function PushLogs(RFID, log, logNotRegisterChekOut) {
             await CheckIn.deleteMany({ RFID: RFID });
         } else {
             var worker = await Worker.updateOne({ RFID: RFID }, { $push: { "log": log } });
-            console.log("log data: ", log);
             if (worker.modifiedCount == 1) {
                 console.log("worker modified");
                 await CheckIn.deleteMany({ RFID: RFID });
@@ -103,33 +102,6 @@ router.post('/checkout', async function (req, res, next) {
             });
 
             var result = await PushLogs(RFID, log, logNotRegisterChekOut);
-            // var paper = await Paper.updateOne({RFID:RFID},{$push:{"log":[log]}});
-            // if(paper.modifiedCount == 1){
-            //     console.log("paper modified");
-            //     await CheckIn.deleteMany({ RFID:RFID}); 
-            // }else{
-            //     var forklift = await Forklift.updateOne({RFID:RFID},{$push:{"log":[log]}});
-            //     if(forklift.modifiedCount == 1){
-            //         console.log("forklift modified");
-            //         await CheckIn.deleteMany({ RFID:RFID}); 
-            //     }else{
-            //         var worker = await Worker.updateOne({RFID:RFID},{$push:{"log":[log]}});
-            //         if(worker.modifiedCount == 1){
-            //             console.log("forklift modified");
-            //             await CheckIn.deleteMany({ RFID:RFID});   
-            //         }else{
-            //             var logNotRegisterChekOut = new NotRegisteredItems({
-            //                 RFID:RFID,
-            //                 workStation:workStation,
-            //                 checkIn:rfid.checkIn,
-            //                 checkOut:Date.now(),
-            //             });
-            //             NotRegisteredItems.create(logNotRegisterChekOut);
-            //             await CheckIn.deleteMany({ RFID:RFID});  
-            //             return res.status(200).send({log:'This RFID is not registered'});
-            //         }
-            //     }
-            // }
             return res.status(200).send(result);
         } else {
             console.log("different workstation");
@@ -152,7 +124,7 @@ router.post('/checkout', async function (req, res, next) {
                     RFID: RFID,
                     workStation: rfid.workStation,
                     checkIn: date,
-                    checkOut:null,
+                    checkOut: null,
                 },
                 {
                     RFID: RFID,
@@ -163,35 +135,7 @@ router.post('/checkout', async function (req, res, next) {
             ];
 
             var result = await PushLogs(RFID, log, logNotRegisterChekOut);
-            // var paper = await Paper.updateOne({ RFID: RFID }, { $push: { "log": logs } });
-            // if (paper.modifiedCount == 1) {
-            //     console.log("paper modified");
-            //     await CheckIn.deleteMany({ RFID: RFID });
-            // } else {
-            //     var forklift = await Forklift.updateOne({ RFID: RFID }, { $push: { "log": logs } });
-            //     if (forklift.modifiedCount == 1) {
-            //         console.log("forklift modified");
-            //         await CheckIn.deleteMany({ RFID: RFID });
-            //     } else {
-            //         var worker = await Worker.updateOne({ RFID: RFID }, { $push: { "log": logs } });
-            //         if (worker.modifiedCount == 1) {
-            //             console.log("forklift modified");
-            //             await CheckIn.deleteMany({ RFID: RFID });
-            //         } else {
-            //             var logNotRegisterChekOut = new NotRegisteredItems({
-            //                 RFID: RFID,
-            //                 workStation: workStation,
-            //                 checkIn: null,
-            //                 checkOut: Date.now(),
-            //             });
-            //             NotRegisteredItems.create(logNotRegisterChekOut);
-            //             // await CheckIn.deleteMany({ RFID:RFID});  
-            //             return res.status(200).send({ log: 'This RFID is not registered' });
-            //         }
-            //     }
-            // }
             return res.status(200).send(result);
-            // return res.status(200).send({ log: 'success' });
         }
     } else {
         console.log("rfid not found in checkin");
@@ -209,29 +153,6 @@ router.post('/checkout', async function (req, res, next) {
         });
 
         var result = await PushLogs(RFID, logNewChekOut, logNotRegisterChekOut);
-        // var paper = await Paper.updateOne({ RFID: RFID }, { $push: { "log": [logNewChekOut] } });
-        // if (paper.modifiedCount == 1) {
-        //     console.log("paper modified");
-        // } else {
-        //     var forklift = await Forklift.updateOne({ RFID: RFID }, { $push: { "log": [logNewChekOut] } });
-        //     if (forklift.modifiedCount == 1) {
-        //         console.log("forklift modified");
-        //     } else {
-        //         var worker = await Worker.updateOne({ RFID: RFID }, { $push: { "log": [logNewChekOut] } });
-        //         if (worker.modifiedCount == 1) {
-        //             console.log("forklift modified");
-        //         } else {
-        //             var logNotRegisterChekOut = new NotRegisteredItems({
-        //                 RFID: RFID,
-        //                 workStation: workStation,
-        //                 checkIn: null,
-        //                 checkOut: Date.now(),
-        //             });
-        //             NotRegisteredItems.create(logNotRegisterChekOut);
-        //             return res.status(200).send({ log: 'This RFID is not registered' });
-        //         }
-        //     }
-        // }
         return res.status(200).send(result);
     }
 });
