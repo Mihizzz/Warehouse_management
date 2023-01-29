@@ -46,10 +46,13 @@ router.post('/checkin', async function (req, res, next) {
         workStation: workStation,
     });
     var rfid = await CheckIn.findOne({ RFID: RFID });
-    console.log("rfid:", rfid);
+    //if the same RFID & same workStation detected ignore the checkIn ,
+    //if the same RFID & different workStation detected write old checkin in LOGs(in paper,forklift,worker), write new checkin record in Checkin table
+    //if no same RFID write checkin record in Checkin table
     if (rfid) {
         if (rfid.workStation === workStation) {
             console.log("same rfid + same work station");
+            return res.status(200).send({ log: 'same rfid + same work station' });
         } else {
             var log = new Log({
                 workStation: rfid.workStation,
@@ -57,34 +60,20 @@ router.post('/checkin', async function (req, res, next) {
                 checkOut: null
 
             });
-            // console.log("log:",log);
-            var paper = await Paper.updateOne({ RFID: RFID }, { $push: { "log": [log] } });
-            // console.log("paper:",paper);
-            if (paper.modifiedCount == 1) {
-                console.log("paper modified");
-                await CheckIn.deleteMany({ RFID: RFID });
-                CheckIn.create(checkin);
-            } else {
-                var forklift = await Forklift.updateOne({ RFID: RFID }, { $push: { "log": [log] } });
-                if (forklift.modifiedCount == 1) {
-                    console.log("forklift modified");
-                    await CheckIn.deleteMany({ RFID: RFID });
-                    CheckIn.create(checkin);
-                } else {
-                    var worker = await Worker.updateOne({ RFID: RFID }, { $push: { "log": [log] } });
-                    if (worker.modifiedCount == 1) {
-                        console.log("forklift modified");
-                        await CheckIn.deleteMany({ RFID: RFID });
-                        CheckIn.create(checkin);
-                    }
-                }
-            }
+            var logNotRegisterChekOut = new NotRegisteredItems({
+                RFID: RFID,
+                workStation: rfid.workStation,
+                checkIn: rfid.checkIn,
+                checkOut: null,
+            });
+            var result = await PushLogs(RFID, log, logNotRegisterChekOut);
+            CheckIn.create(checkin);
+            return res.status(200).send(result);
         }
     } else {
         CheckIn.create(checkin);
+        return res.status(200).send({ log: 'success' });
     }
-    return res.status(200).send({ log: 'success' });
-
 });
 //post check-out
 router.post('/checkout', async function (req, res, next) {
